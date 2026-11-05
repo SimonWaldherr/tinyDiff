@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="de" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      name="description"
+      content="Texte und Dateien direkt im Browser vergleichen. Kostenlos, ohne Upload, ohne Tracking."
+      data-i18n-content="Texte und Dateien direkt im Browser vergleichen. Kostenlos, ohne Upload, ohne Tracking."
+    />
+    <meta name="color-scheme" content="light dark" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; font-src 'none'; media-src 'none'; img-src 'self' data: blob:; worker-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <title data-i18n="tinyDiff · Der Unterschied zählt.">tinyDiff · Der Unterschied zählt.</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./style.css" />
+    <script type="module" src="./app.js"></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a
+        class="brand"
+        href="./"
+        aria-label="tinyDiff Startseite"
+        data-i18n-aria-label="tinyDiff Startseite"
+        ><span class="brand-icon" aria-hidden="true">±</span>tiny<span>Diff</span></a
+      >
+      <div class="header-right">
+        <label class="language-label"
+          ><span data-i18n="Sprache">Sprache</span
+          ><select id="language" aria-label="Sprache" data-i18n-aria-label="Sprache">
+            <option value="de" lang="de">Deutsch</option>
+            <option value="en" lang="en">English</option>
+            <option value="it" lang="it">Italiano</option>
+            <option value="es" lang="es">Español</option>
+            <option value="fr" lang="fr">Français</option>
+          </select></label
+        ><span class="local"
+          ><i></i><span data-i18n="Bleibt auf deinem Gerät">Bleibt auf deinem Gerät</span></span
+        ><button
+          id="theme"
+          class="icon-button"
+          aria-label="Dunkles Design aktivieren"
+          data-i18n-aria-label="Dunkles Design aktivieren"
+          title="Design wechseln"
+          data-i18n-title="Design wechseln"
+        >
+          ◐
+        </button>
+      </div>
+    </header>
+    <a class="skip-link" href="#workspace"
+      ><span data-i18n="Zum Vergleich springen">Zum Vergleich springen</span></a
+    >
+    <main>
+      <section class="intro">
+        <div>
+          <p class="eyebrow">
+            <span data-i18n="WENIGER SUCHEN. MEHR SEHEN.">WENIGER SUCHEN. MEHR SEHEN.</span>
+          </p>
+          <h1>
+            <span data-i18n="Der Unterschied zählt">Der Unterschied zählt</span><span>.</span>
+          </h1>
+          <p>
+            <span data-i18n="Zwei Versionen. Ein klarer Vergleich."
+              >Zwei Versionen. Ein klarer Vergleich.</span
+            >
+          </p>
+        </div>
+        <div class="intro-note">
+          <span aria-hidden="true">⌘</span>
+          <div>
+            <span data-i18n="Text einfügen oder Dateien ablegen."
+              >Text einfügen oder Dateien ablegen.</span
+            ><br /><span data-i18n="Alles passiert direkt in deinem Browser."
+              >Alles passiert direkt in deinem Browser.</span
+            >
+          </div>
+        </div>
+      </section>
+      <section
+        class="workspace"
+        id="workspace"
+        tabindex="-1"
+        aria-label="Texte vergleichen"
+        data-i18n-aria-label="Texte vergleichen"
+      >
+        <div class="input-toolbar">
+          <span class="section-label"
+            >01 <strong data-i18n="Deine Versionen">Deine Versionen</strong></span
+          >
+          <div class="toolbar-actions">
+            <button id="example" class="text-button">
+              <span data-i18n="Beispiel laden">Beispiel laden</span></button
+            ><button
+              id="swap"
+              class="text-button"
+              title="Original und Änderung tauschen"
+              data-i18n-title="Original und Änderung tauschen"
+            >
+              ⇄ <span data-i18n="Tauschen">Tauschen</span></button
+            ><button id="undo" class="text-button" hidden>
+              <span data-i18n="Rückgängig">Rückgängig</span></button
+            ><button id="clear" class="text-button"><span data-i18n="Leeren">Leeren</span></button>
+          </div>
+        </div>
+        <div class="mode-toolbar">
+          <label for="mode"><span data-i18n="Vergleichsmodus">Vergleichsmodus</span></label
+          ><select id="mode" aria-describedby="mode-hint">
+            <optgroup label="Text" data-i18n-label="Text">
+              <option value="words" data-i18n="Wörter">Wörter</option>
+              <option value="characters" data-i18n="Zeichen">Zeichen</option>
+              <option value="lines" data-i18n="Zeilen">Zeilen</option>
+              <option value="sentences" data-i18n="Sätze">Sätze</option>
+              <option value="unordered" data-i18n="Zeilen ohne Reihenfolge">
+                Zeilen ohne Reihenfolge
+              </option>
+            </optgroup>
+            <optgroup label="Strukturierte Daten" data-i18n-label="Strukturierte Daten">
+              <option value="json" data-i18n="JSON">JSON</option>
+              <option value="ast" data-i18n="AST (Quellcode)">AST (Quellcode)</option>
+              <option value="jsonl" data-i18n="JSON Lines">JSON Lines</option>
+              <option value="table" data-i18n="CSV / TSV">CSV / TSV</option>
+              <option value="config" data-i18n="INI / .env">INI / .env</option>
+              <option value="xml" data-i18n="XML">XML</option>
+            </optgroup>
+            <optgroup label="Office" data-i18n-label="Office">
+              <option value="docx" data-i18n="DOCX">DOCX</option>
+              <option value="pptx" data-i18n="PPTX">PPTX</option>
+              <option value="xlsx" data-i18n="XLSX">XLSX</option>
+            </optgroup>
+            <optgroup label="Dateien" data-i18n-label="Dateien">
+              <option value="images" data-i18n="Bilder">Bilder</option>
+              <option value="binary" data-i18n="Binär / Hex">Binär / Hex</option>
+              <option value="folders" data-i18n="Ordner">Ordner</option>
+            </optgroup></select
+          ><label id="delimiter-control" hidden
+            ><span data-i18n="Trennzeichen">Trennzeichen</span>
+            <select id="delimiter">
+              <option value="auto" data-i18n="Automatisch">Automatisch</option>
+              <option value="," data-i18n="Komma (,)">Komma (,)</option>
+              <option value=";" data-i18n="Semikolon (;)">Semikolon (;)</option>
+              <option value="tab" data-i18n="Tabulator (TSV)">Tabulator (TSV)</option>
+            </select></label
+          >
+          <label id="source-language-control" hidden>
+            <span data-i18n="Quellcodesprache">Quellcodesprache</span>
+            <select id="source-language">
+              <option value="python">Python</option>
+              <option value="go">Go</option>
+              <option value="c">C</option>
+              <option value="cpp">C++</option>
+              <option value="rust">Rust</option>
+              <option value="javascript">JavaScript</option>
+              <option value="typescript">TypeScript</option>
+            </select>
+          </label>
+          <p id="mode-hint">
+            <span data-i18n="Zeilenvergleich mit präzisen Wortmarkierungen."
+              >Zeilenvergleich mit präzisen Wortmarkierungen.</span
+            >
+          </p>
+        </div>
+        <details id="mode-browser" class="mode-browser">
+          <summary data-i18n="Modi entdecken">Modi entdecken</summary>
+          <div id="mode-picker"></div>
+        </details>
+        <p
+          class="format-note"
+          hidden
+          data-i18n="Formatieren und Minifizieren ändern nur die gewählte Seite. XML-Mischtext und xml:space bleiben erhalten."
+        >
+          Formatieren und Minifizieren ändern nur die gewählte Seite. XML-Mischtext und xml:space
+          bleiben erhalten.
+        </p>
+        <div class="editors">
+          <section class="editor" id="drop-before">
+            <div class="editor-heading">
+              <label for="before"
+                ><i class="dot old"></i><span data-i18n="Original">Original</span>
+                <span id="name-before">original.txt</span></label
+              ><button class="file-button" data-file="before">
+                <span data-i18n="Datei öffnen ↗">Datei öffnen ↗</span></button
+              ><input type="file" id="file-before" hidden />
+            </div>
+            <div
+              class="format-toolbar"
+              hidden
+              id="format-before"
+              role="group"
+              aria-label="Original"
+              data-i18n-aria-label="Original"
+            >
+              <select
+                id="format-type-before"
+                aria-label="Format für Textwerkzeuge"
+                data-i18n-aria-label="Format für Textwerkzeuge"
+              >
+                <option value="json">JSON</option>
+                <option value="xml">XML</option></select
+              ><button
+                type="button"
+                data-format-side="before"
+                data-compact="false"
+                data-i18n="Formatieren"
+              >
+                Formatieren</button
+              ><button
+                type="button"
+                data-format-side="before"
+                data-compact="true"
+                data-i18n="Minifizieren"
+              >
+                Minifizieren
+              </button>
+            </div>
+            <div id="asset-before" class="asset-input" hidden></div>
+            <input type="file" id="folder-before" webkitdirectory multiple hidden /><textarea
+              dir="auto"
+              id="before"
+              spellcheck="false"
+              autocapitalize="off"
+              autocomplete="off"
+              aria-describedby="input-hint"
+              placeholder="Ursprünglichen Text hier einfügen …"
+              data-i18n-placeholder="Ursprünglichen Text hier einfügen …"
+            ></textarea>
+            <div class="editor-footer">
+              <span id="meta-before"
+                ><span data-i18n="0 Zeilen · 0 Zeichen">0 Zeilen · 0 Zeichen</span></span
+              ><span>UTF-8</span>
+            </div>
+          </section>
+          <section class="editor" id="drop-after">
+            <div class="editor-heading">
+              <label for="after"
+                ><i class="dot new"></i><span data-i18n="Änderung">Änderung</span>
+                <span id="name-after">modified.txt</span></label
+              ><button class="file-button" data-file="after">
+                <span data-i18n="Datei öffnen ↗">Datei öffnen ↗</span></button
+              ><input type="file" id="file-after" hidden />
+            </div>
+            <div
+              class="format-toolbar"
+              hidden
+              id="format-after"
+              role="group"
+              aria-label="Änderung"
+              data-i18n-aria-label="Änderung"
+            >
+              <select
+                id="format-type-after"
+                aria-label="Format für Textwerkzeuge"
+                data-i18n-aria-label="Format für Textwerkzeuge"
+              >
+                <option value="json">JSON</option>
+                <option value="xml">XML</option></select
+              ><button
+                type="button"
+                data-format-side="after"
+                data-compact="false"
+                data-i18n="Formatieren"
+              >
+                Formatieren</button
+              ><button
+                type="button"
+                data-format-side="after"
+                data-compact="true"
+                data-i18n="Minifizieren"
+              >
+                Minifizieren
+              </button>
+            </div>
+            <div id="asset-after" class="asset-input" hidden></div>
+            <input type="file" id="folder-after" webkitdirectory multiple hidden /><textarea
+              dir="auto"
+              id="after"
+              spellcheck="false"
+              autocapitalize="off"
+              autocomplete="off"
+              aria-describedby="input-hint"
+              placeholder="Neue Version hier einfügen …"
+              data-i18n-placeholder="Neue Version hier einfügen …"
+            ></textarea>
+            <div class="editor-footer">
+              <span id="meta-after"
+                ><span data-i18n="0 Zeilen · 0 Zeichen">0 Zeilen · 0 Zeichen</span></span
+              ><span>UTF-8</span>
+            </div>
+          </section>
+        </div>
+        <div class="compare-toolbar">
+          <div class="options">
+            <label
+              ><input id="whitespace" type="checkbox" aria-describedby="whitespace-hint" /><span
+                data-i18n="Leerraum ignorieren"
+                >Leerraum ignorieren</span
+              ></label
+            ><label
+              ><input id="case" type="checkbox" /><span data-i18n="Groß-/Kleinschreibung ignorieren"
+                >Groß-/Kleinschreibung ignorieren</span
+              ></label
+            ><span
+              id="whitespace-hint"
+              class="option-hint"
+              data-i18n="Leerraum wird innerhalb der Vergleichseinheiten ignoriert; Zeilen- und Satzgrenzen bleiben relevant."
+              >Leerraum wird innerhalb der Vergleichseinheiten ignoriert; Zeilen- und Satzgrenzen
+              bleiben relevant.</span
+            >
+          </div>
+          <button id="back-folders" class="secondary" hidden>
+            <span data-i18n="← Ordnerübersicht">← Ordnerübersicht</span></button
+          ><button id="cancel" class="secondary" hidden>
+            <span data-i18n="Abbrechen">Abbrechen</span></button
+          ><button id="compare" class="primary">
+            <span data-i18n="Vergleichen">Vergleichen</span> <span aria-hidden="true">↗</span>
+          </button>
+        </div>
+      </section>
+      <p id="input-hint" class="hint">
+        <span
+          data-i18n="Textdateien bis 2 MiB und insgesamt 20.000 Zeilen · CRLF/CR wird als LF verglichen ·"
+          >Textdateien bis 2 MiB und insgesamt 20.000 Zeilen · CRLF/CR wird als LF verglichen
+          ·</span
+        >
+        <kbd>Ctrl</kbd> / <kbd>⌘</kbd> + <kbd>Enter</kbd>
+        <span data-i18n="vergleichen">vergleichen</span>
+      </p>
+      <section class="results" aria-labelledby="result-title">
+        <div class="result-toolbar">
+          <div class="result-title">
+            <span class="section-label"
+              >02 <strong id="result-title" data-i18n="Der Vergleich">Der Vergleich</strong></span
+            ><span id="stats"></span>
+          </div>
+          <div class="result-actions">
+            <div
+              class="segmented"
+              role="group"
+              aria-label="Vergleichsansicht"
+              data-i18n-aria-label="Vergleichsansicht"
+            >
+              <button id="split" aria-pressed="true">
+                <span data-i18n="Nebeneinander">Nebeneinander</span></button
+              ><button id="unified" aria-pressed="false">
+                <span data-i18n="Untereinander">Untereinander</span>
+              </button>
+            </div>
+            <button id="export-report" class="secondary" disabled>
+              <span data-i18n="↓ HTML-Bericht">↓ HTML-Bericht</span>
+            </button>
+            <button id="export" class="secondary" disabled>
+              <span data-i18n="↓ Patch">↓ Patch</span>
+            </button>
+          </div>
+        </div>
+        <div id="report-note" class="report-options" hidden>
+          <label id="report-exif-option" hidden
+            ><input id="report-exif" type="checkbox" />
+            <span data-i18n="EXIF-Daten einschließen">EXIF-Daten einschließen</span>
+          </label>
+          <p
+            class="hint"
+            data-i18n="HTML-Berichte enthalten Vergleichsinhalte und gegebenenfalls GPS-Daten. Vor der Weitergabe prüfen."
+          >
+            HTML-Berichte enthalten Vergleichsinhalte und gegebenenfalls GPS-Daten. Vor der
+            Weitergabe prüfen.
+          </p>
+        </div>
+        <div id="status" role="status" aria-live="polite">
+          <span data-i18n="Bereit für deinen ersten Vergleich."
+            >Bereit für deinen ersten Vergleich.</span
+          >
+        </div>
+        <div id="office-navigation" class="office-navigation" hidden>
+          <label for="office-section" data-i18n="Zu Abschnitt springen"
+            >Zu Abschnitt springen</label
+          >
+          <select id="office-section"></select>
+        </div>
+        <div id="navigation" class="navigation" hidden>
+          <label
+            ><input type="checkbox" id="changes-only" /><span data-i18n="Nur Änderungen"
+              >Nur Änderungen</span
+            ></label
+          >
+          <div>
+            <span id="position" role="status" aria-live="polite"></span
+            ><button
+              id="previous"
+              aria-keyshortcuts="Shift+F7"
+              class="small-button"
+              aria-label="Vorherige Änderung"
+              data-i18n-aria-label="Vorherige Änderung"
+            >
+              ↑</button
+            ><button
+              id="next"
+              aria-keyshortcuts="F7"
+              class="small-button"
+              aria-label="Nächste Änderung"
+              data-i18n-aria-label="Nächste Änderung"
+            >
+              ↓
+            </button>
+            <span class="shortcut-hint" data-i18n="F7: weiter · Umschalt+F7: zurück"
+              >F7: weiter · Umschalt+F7: zurück</span
+            >
+          </div>
+        </div>
+        <div
+          id="diff"
+          class="diff"
+          tabindex="0"
+          aria-label="Vergleichsergebnis"
+          data-i18n-aria-label="Vergleichsergebnis"
+        >
+          <div class="empty">
+            <span class="empty-symbol" aria-hidden="true"><span>−</span><span>+</span></span>
+            <h2><span data-i18n="Platz für den Aha-Moment.">Platz für den Aha-Moment.</span></h2>
+            <p>
+              <span data-i18n="Füge zwei Texte ein und entdecke, was sich verändert hat."
+                >Füge zwei Texte ein und entdecke, was sich verändert hat.</span
+              >
+            </p>
+            <button id="empty-example" class="text-button">
+              <span data-i18n="Mit einem Beispiel ausprobieren →"
+                >Mit einem Beispiel ausprobieren →</span
+              >
+            </button>
+          </div>
+        </div>
+      </section>
+      <footer>
+        <span
+          ><strong>tinyDiff</strong>
+          <span data-i18n="· Kleines Tool. Klarer Unterschied."
+            >· Kleines Tool. Klarer Unterschied.</span
+          ></span
+        ><span
+          ><span data-i18n="Kein Upload. Keine Cookies. Kein Tracking."
+            >Kein Upload. Keine Cookies. Kein Tracking.</span
+          >
+          · <a href="./LICENSE">MIT</a></span
+        >
+      </footer>
+    </main>
+    <dialog id="clear-dialog" aria-labelledby="clear-title" aria-describedby="clear-description">
+      <form method="dialog">
+        <h2 id="clear-title">
+          <span data-i18n="Alle Eingaben verwerfen?">Alle Eingaben verwerfen?</span>
+        </h2>
+        <p id="clear-description">
+          <span
+            data-i18n="Texte, Dateiauswahl und Rücknahme werden aus der Anwendung entfernt. Dieser Schritt lässt sich nicht rückgängig machen."
+            >Texte, Dateiauswahl und Rücknahme werden aus der Anwendung entfernt. Dieser Schritt
+            lässt sich nicht rückgängig machen.</span
+          >
+        </p>
+        <div class="dialog-actions">
+          <button value="cancel" autofocus class="secondary">
+            <span data-i18n="Behalten">Behalten</span></button
+          ><button value="clear" class="primary">
+            <span data-i18n="Alles verwerfen">Alles verwerfen</span>
+          </button>
+        </div>
+      </form>
+    </dialog>
+  </body>
+</html>

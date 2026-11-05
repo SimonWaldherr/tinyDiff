@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" />
+  <title>tinyDiff browser tests</title>
+  <h1>XML, Office and image regression tests</h1>
+  <p>
+    Serve the repository root and open this page. These checks use the browser's real XML parser.
+  </p>
+  <pre id="results" role="status">Running…</pre>
+  <script type="module">
+    import { formatXML } from '../site/beautify.js';
+    import { compareXML } from '../site/structured-modes.js';
+    const cases = [
+      '<r><a/><b>text</b></r>',
+      '<r xml:space="pres&#101;rve"> <a/> </r>',
+      '<r note=" xml:space=\'preserve\'"><a/></r>',
+      '<r xml:space="preserve"><a xml:space="default"><b/></a></r>',
+      '<r>Hello <b>world</b> <![CDATA[ < & > ]]></r>',
+      '<?xml version="1.0"?><r xmlns="urn:test"><!-- keep --><a value="x > y"/></r>'
+    ];
+    const results = [];
+    for (const source of cases) {
+      try {
+        const pretty = formatXML(source);
+        const compact = formatXML(pretty, true);
+        if (compareXML(source, pretty).some((row) => row.type !== 'equal'))
+          throw new Error('Beautify changed XML content');
+        if (compareXML(source, compact).some((row) => row.type !== 'equal'))
+          throw new Error('Minify changed XML content');
+        if (formatXML(pretty) !== pretty) throw new Error('Beautify is not idempotent');
+        results.push('PASS ' + source);
+      } catch (error) {
+        results.push('FAIL ' + source + '\n  ' + error.message);
+      }
+    }
+    for (const source of ['<broken>', '<!DOCTYPE r><r/>']) {
+      try {
+        formatXML(source);
+        results.push('FAIL accepted ' + source);
+      } catch {
+        results.push('PASS rejected ' + source);
+      }
+    }
+    const { readOffice } = await import('../site/office.js');
+    const { makeZip, docxParts, pptxParts, xlsxParts } = await import('./office-fixtures.js');
+    for (const [format, parts, check] of [
+      ['docx', docxParts, (text) => text === 'Hello & world\ttab\nlinenew\n\nLeft\tRight\n'],
+      [
+        'pptx',
+        pptxParts,
+        (text) =>
+          text.indexOf('Second file') < text.indexOf('First file') && text.includes('[slide:1]')
+      ],
+      [
+        'xlsx',
+        xlsxParts,
+        (text) =>
+          text.includes('A1\ttext\t"Hello world"') &&
+          text.includes('B1\tn\t"2"\t=') &&
+          text.includes('1+1') &&
+          text.includes('D1\tb\t"1"') &&
+          text.includes('C1\ttext\t"inside"') &&
+          !text.includes('pronunciation')
+      ]
+    ]) {
+      try {
+        const text = await readOffice(makeZip(parts), format);
+        if (!check(text)) throw new Error('Unexpected text: ' + text);
+        results.push('PASS ' + format + ' extraction');
+      } catch (error) {
+        results.push('FAIL ' + format + ' ' + error.message);
+      }
+    }
+    try {
+      const { createImageDemo } = await import('../site/image-demo.js');
+      const { pixelDiff } = await import('../site/modes.js');
+      const { readImageExif, compareExif } = await import('../site/exif.js');
+      const images = [];
+      for (const file of await createImageDemo()) {
+        if (file.type !== 'image/png') throw new Error('Demo must produce PNG files');
+        const bitmap = await createImageBitmap(file);
+        const canvas = document.createElement('canvas');
+        canvas.width = bitmap.width;
+        canvas.height = bitmap.height;
+        const context = canvas.getContext('2d');
+        context.drawImage(bitmap, 0, 0);
+        bitmap.close();
+        images.push({
+          exif: readImageExif(await file.arrayBuffer()),
+          width: canvas.width,
+          height: canvas.height,
+          data: context.getImageData(0, 0, canvas.width, canvas.height).data
+        });
+      }
+      if (images.some((image) => image.width !== 960 || image.height !== 600))
+        throw new Error('Unexpected demo dimensions');
+      const { changed } = pixelDiff(images[0], images[1], 960, 600);
+      if (changed < 5000 || changed > 30000)
+        throw new Error('Demo needs localized, visible differences');
+      results.push('PASS local PNG demo with localized pixel differences');
+      if (images.some((image) => image.exif.status !== 'ok')) throw new Error('Demo EXIF missing');
+      if (
+        compareExif(images[0].exif.tags, images[1].exif.tags).filter((row) => row.type !== 'equal')
+          .length !== 3
+      )
+        throw new Error('Expected three time differences');
+      results.push('PASS embedded PNG EXIF and three capture-time differences');
+      const { createExifView } = await import('../site/exif-view.js');
+      const metadata = createExifView(images[0].exif, images[1].exif);
+      if (
+        metadata.querySelectorAll('tr.change').length !== 3 ||
+        !metadata.querySelector('td.remove mark') ||
+        !metadata.querySelector('td.add mark')
+      )
+        throw new Error('Changed EXIF values must be highlighted');
+      if ([...metadata.querySelectorAll('tr')].some((row) => row.cells.length !== 3))
+        throw new Error('EXIF table must have exactly three columns');
+      const first = metadata.querySelector('tr.change');
+      if (!first.cells[0].getAttribute('aria-label').includes('Geändert'))
+        throw new Error('Changed status must remain accessible in the row heading');
+      if (
+        first.cells[1].textContent !== '"2026:06:21 06:40:00"' ||
+        first.cells[2].textContent !== '"2026:06:21 07:05:00"'
+      )
+        throw new Error('Highlighting changed displayed values');
+      const filter = metadata.querySelector('input[type="checkbox"]');
+      filter.checked = true;
+      filter.dispatchEvent(new Event('change'));
+      if ([...metadata.querySelectorAll('tr.equal')].some((row) => !row.hidden))
+        throw new Error('EXIF filter must hide equal rows');
+      results.push('PASS EXIF highlights preserve values and filter unchanged tags');
+    } catch (error) {
+      results.push('FAIL image demo ' + error.message);
+    }
+    try {
+      const { createImageView } = await import('../site/image-view.js');
+      const host = document.createElement('div');
+      host.hidden = true;
+      document.body.append(host);
+      const image = (width, height) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#087f68';
+        ctx.fillRect(0, 0, width, height);
+        return {
+          canvas,
+          width,
+          height,
+          data: ctx.getImageData(0, 0, width, height).data,
+          exif: { status: 'absent', tags: new Map() }
+        };
+      };
+      let summary = '';
+      const dispose = createImageView(
+        host,
+        image(200, 100),
+        image(100, 50),
+        (text) => (summary = text),
+        (error) => {
+          throw new Error(error);
+        }
+      );
+      try {
+        const sizing = host.querySelector('select[aria-label="Größenanpassung"]');
+        if (summary.startsWith('0,00')) throw new Error('Native dimensions must differ');
+        sizing.value = 'before';
+        sizing.dispatchEvent(new Event('change'));
+        if (!summary.startsWith('0,00'))
+          throw new Error('Resized identical solid images must match');
+        if (
+          [...host.querySelectorAll('.image-grid canvas')].some(
+            (canvas) => canvas.width !== 200 || canvas.height !== 100
+          )
+        )
+          throw new Error('Wrong comparison dimensions');
+        results.push('PASS resized pixel comparison and output dimensions');
+      } finally {
+        dispose();
+        host.remove();
+      }
+    } catch (error) {
+      results.push('FAIL resizing ' + error.message);
+    }
+    const { sourceLanguages } = await import('../site/source-languages.js');
+    for (const [sourceLanguage, before, after, shouldFail] of [
+      [
+        'python',
+        sourceLanguages.python.example,
+        sourceLanguages.python.example.replace('price + 5', 'price * 8'),
+        false
+      ],
+      ['python', 'def broken(:', '', true]
+    ]) {
+      const worker = new Worker(new URL('../site/worker.js?v=10', import.meta.url), {
+        type: 'module'
+      });
+      let timer;
+      try {
+        const data = await new Promise((resolve, reject) => {
+          timer = setTimeout(() => reject(new Error('AST worker timeout')), 15000);
+          worker.onmessage = (event) => resolve(event.data);
+          worker.onerror = () => reject(new Error('AST worker failed'));
+          worker.postMessage({
+            id: 1,
+            before,
+            after,
+            options: { mode: 'ast', sourceLanguage, language: 'en' }
+          });
+        });
+        if (
+          shouldFail
+            ? !data.error?.includes('Syntax error')
+            : data.error || !data.entries?.some((row) => row.type !== 'equal')
+        )
+          throw new Error(data.error || 'Unexpected AST result');
+        results.push(
+          'PASS AST worker ' +
+            sourceLanguage +
+            (shouldFail ? ' syntax error' : ' syntax comparison')
+        );
+      } catch (error) {
+        results.push('FAIL AST worker ' + error.message);
+      } finally {
+        clearTimeout(timer);
+        worker.terminate();
+      }
+    }
+    {
+      const worker = new Worker(new URL('../site/worker.js?v=10', import.meta.url), {
+        type: 'module'
+      });
+      let timer;
+      try {
+        const messages = await new Promise((resolve, reject) => {
+          const received = [];
+          timer = setTimeout(() => reject(new Error('Concurrent worker timeout')), 15000);
+          worker.onmessage = (event) => {
+            received.push(event.data);
+            if (received.length === 2) resolve(received);
+          };
+          worker.onerror = () => reject(new Error('Concurrent worker failed'));
+          worker.postMessage({
+            id: 1,
+            before: 'x = 1',
+            after: 'x = 2',
+            options: { mode: 'ast', sourceLanguage: 'python', language: 'en' }
+          });
+          worker.postMessage({
+            id: 2,
+            before: '{}',
+            after: '{"x":1}',
+            options: { mode: 'json', language: 'fr' }
+          });
+        });
+        if (
+          messages[0].id !== 1 ||
+          messages[0].label !== 'Syntax path' ||
+          messages[1].id !== 2 ||
+          messages[1].label !== 'Chemin JSON'
+        )
+          throw new Error('Request order or locale changed during async loading');
+        results.push('PASS concurrent worker requests preserve order and locale');
+      } catch (error) {
+        results.push('FAIL concurrent worker ' + error.message);
+      } finally {
+        clearTimeout(timer);
+        worker.terminate();
+      }
+    }
+    const { testReports } = await import('./report-browser.js');
+    results.push(...(await testReports()));
+    const { testOfficeNavigation } = await import('./office-navigation-browser.js');
+    results.push(...(await testOfficeNavigation()));
+    document.getElementById('results').textContent = results.join('\n');
+  </script>
+</html>
